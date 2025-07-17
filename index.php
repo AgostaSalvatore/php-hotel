@@ -1,15 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
-    <title>Hotel EX</title>
-</head>
-<body>
-    <h1>Hotel</h1>
-
-    <?php
+<?php
     // Array contenente tutti gli hotel con le loro caratteristiche
     $hotels = [
 
@@ -50,21 +39,55 @@
         ],
 
     ];
-    ?>
+
+    $parking_requested = false;
+
+    if(isset($_GET['parking']) && $_GET['parking'] == "on"){
+        $parking_requested = true;
+    }
+
+
+    //filtro voto
+    $minimum_vote = 0;
+
+    if(isset($_GET['minimum_vote']) && is_numeric($_GET['minimum_vote']) && $_GET['minimum_vote'] > 0 && $_GET['minimum_vote'] <= 5){
+        $minimum_vote = (int)$_GET['minimum_vote'];
+    }
+
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <title>Hotel EX</title>
+</head>
+<body>
+    <h1>Hotel</h1>
 
     <div class="container mt-5">
         <!-- Form per i filtri di ricerca -->
-        <form action="" method='GET'>
-            <!-- Slider per filtrare per voto minimo (da 1 a 5) -->
-            <label for="">VOTO</label>
-            <input type="range" min="1" max="5" name="vote" id="vote" value="<?php echo $_GET['vote'] ?>">
-            <!-- Checkbox per filtrare solo hotel con parcheggio -->
-            <label for="">Parcheggio</label>
-            <input type="checkbox" name="parking" id="parking" <?php echo $_GET['parking'] ?? null ? 'checked' : ''; ?>>
-            <!-- Pulsante per applicare i filtri -->
-            <button type='submit'>Filtra</button>
-        </form>
+         <h2>Filtri</h2>
+         <form action="">
+             <div class="d-flex mb-3">
+    
+                 <div class='form-control'>
+                         <!-- Checkbox per filtrare solo hotel con parcheggio -->
+                         <label for="parking">Parcheggio</label>
+                         <input type="checkbox" name="parking" id="parking" <?php echo $_GET['parking'] ?? null ? 'checked' : ''; ?>>
+                 </div>
         
+                 <div class='form-control'>
+                     <input type="number" id='minimum_vote' name="minimum_vote" min=1 max=5>
+                     <label for="minimum_vote">Voto Minimo</label>
+                 </div>
+             </div>
+
+             <button> Applica Filtri</button>
+         </form>
+        <hr class='mb-3'>
         <div class="table">
             <table class="table table-dark table-striped">
                 <thead>
@@ -77,31 +100,25 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
                     <?php
-                    // SISTEMA DI FILTRI
-                    // Inizializziamo con tutti gli hotel disponibili
-                    $filtered_hotels = $hotels;
-                    
-                    // FILTRO PER VOTO MINIMO
-                    // Se l'utente ha selezionato un voto, mostra solo hotel con voto >= al valore selezionato
-                    if($_GET['vote'] ?? null) {
-                        $min_vote = $_GET['vote']; // Prende il valore dal form
-                        $filtered_hotels = array_filter($filtered_hotels, function($hotel) use ($min_vote) {
-                            return $hotel['vote'] >= $min_vote; // Mantiene solo hotel con voto sufficiente
-                        });
-                    }
-                    
-                    // FILTRO PER PARCHEGGIO
-                    // Se la checkbox è spuntata, mostra solo hotel che hanno il parcheggio
-                    if($_GET['parking'] ?? null) {
-                        $filtered_hotels = array_filter($filtered_hotels, function($hotel) {
-                            return $hotel['parking'] === true; // Mantiene solo hotel con parcheggio
-                        });
-                    }
-                    
                     // Ciclo attraverso gli hotel filtrati per mostrarli nella tabella
-                    foreach ($filtered_hotels as $hotel) { ?>
+                    foreach ($hotels as $hotel) { 
+
+                        if($parking_requested){
+                            //controlliamo se l'hotel attuale ha i parcheggi
+                            if(!$hotel['parking']){
+                                //saltiamo il ciclo se parking e' = null/flase
+                                continue; //una sorta di skip
+                            }
+                        }
+
+
+                        //controllo anche sul voto
+                        //se e' superiore o uguale AL VOTO MINIMO
+                        if($hotel['vote'] < $minimum_vote){
+                            continue;
+                        }
+                    ?>
                 <tr>
                     <td><?php echo $hotel['name']; ?></td>
                     <td><?php echo $hotel['description']; ?></td>
@@ -110,8 +127,6 @@
                     <td><?php echo $hotel['distance_to_center']; ?></td>
                 </tr>
                 <?php } ?>
-
-                    </tr>
                 </tbody>
             </table>
         </div>
